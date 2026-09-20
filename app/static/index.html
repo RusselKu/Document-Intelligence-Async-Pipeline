@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocIntel Archive | Asynchronous Document Intelligence</title>
+    <!-- Google Fonts: Playfair Display (Serif), Source Serif 4, Cinzel & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="top-gold-bar"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="navbar">
+            <div class="logo">
+                <i class="fa-solid fa-book-bookmark logo-icon"></i>
+                <div>
+                    <h1>DocIntel Archive</h1>
+                    <p class="subtitle">Patrón Claim-Check & Processing OCR Asíncrono</p>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="http://localhost:5555" target="_blank" class="btn-secondary">
+                    <i class="fa-solid fa-chart-line"></i> Flower Dashboard (:5555)
+                </a>
+                <a href="/docs" target="_blank" class="btn-secondary">
+                    <i class="fa-solid fa-code"></i> OpenAPI Docs
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Panel: Upload & Job Status -->
+            <section class="card formal-panel upload-section">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-file-arrow-up"></i> Ingesta de Documentos</h2>
+                    <span class="gold-badge">Patrón Claim-Check</span>
+                </div>
+                <p class="section-desc">Cargue expedientes y archivos para análisis y extracción de texto en segundo plano.</p>
+
+                <!-- Drag & Drop Zone -->
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-content">
+                        <i class="fa-solid fa-scroll drop-icon"></i>
+                        <p class="drop-title">Arrastre o seleccione un documento</p>
+                        <p class="drop-sub">Formatos admitidos: PDF, PNG, JPG, TXT, DOCX</p>
+                        <span class="file-types-badge">Límite máximo de carga: 25 MB</span>
+                        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt,.docx" hidden>
+                    </div>
+                    <div class="selected-file-info hidden" id="fileInfo">
+                        <i class="fa-solid fa-file-contract file-icon"></i>
+                        <div class="file-text-details">
+                            <span id="fileNameDisplay" class="file-name">nombre_archivo.pdf</span>
+                            <span id="fileSizeDisplay" class="file-size">(0 MB)</span>
+                        </div>
+                        <button id="btnRemoveFile" class="btn-icon" title="Remover archivo"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <button id="btnUpload" class="btn-primary full-width" disabled>
+                    <i class="fa-solid fa-feather-pointed"></i> Iniciar Procesamiento Asíncrono
+                </button>
+
+                <!-- Status Progress Card -->
+                <div id="statusCard" class="status-card hidden">
+                    <div class="status-header">
+                        <span class="status-title">Estado del Job</span>
+                        <span id="jobStatusBadge" class="badge badge-pending">PENDING</span>
+                    </div>
+                    <p id="jobIdText" class="job-id-mono">ID: -</p>
+                    
+                    <div class="progress-bar-container">
+                        <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <p id="statusMessageText" class="status-msg">Encolando documento en Redis...</p>
+                    
+                    <div class="status-metrics">
+                        <div>
+                            <span class="metric-label">Tiempo Transcurrido</span>
+                            <span id="timeElapsed" class="metric-val">0.0s</span>
+                        </div>
+                        <div>
+                            <span class="metric-label">Formato</span>
+                            <span id="fileFormatBadge" class="metric-val">-</span>
+                        </div>
+                    </div>
+
+                    <button id="btnRunBenchmark" class="btn-secondary full-width margin-top hidden">
+                        <i class="fa-solid fa-scale-balanced"></i> Benchmark Empírico de Parseadores
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Intelligence -->
+            <section class="card formal-panel results-section">
+                <div class="results-header">
+                    <h2><i class="fa-solid fa-paragraph"></i> Texto Extraído & Análisis</h2>
+                    <div class="result-actions hidden" id="resultActions">
+                        <button id="btnCopyText" class="btn-icon-label"><i class="fa-solid fa-copy"></i> Copiar</button>
+                        <button id="btnDownloadText" class="btn-icon-label"><i class="fa-solid fa-file-export"></i> Exportar TXT</button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyResultState" class="empty-state">
+                    <i class="fa-solid fa-newspaper"></i>
+                    <p>Cargue un documento para consultar la transcripción de texto y el reporte de metadatos.</p>
+                </div>
+
+                <!-- Metadata Grid -->
+                <div id="metadataGrid" class="metadata-grid hidden">
+                    <div class="meta-card">
+                        <i class="fa-solid fa-font icon"></i>
+                        <div>
+                            <span class="meta-val" id="metaWords">0</span>
+                            <span class="meta-key">Palabras Totales</span>
+                        </div>
+                    </div>
+                    <div class="meta-card">
+                        <i class="fa-solid fa-globe icon"></i>
+                        <div>
+                            <span class="meta-val" id="metaLang">N/A</span>
+                            <span class="meta-key">Idioma Detectado</span>
+                        </div>
+                    </div>
+                    <div class="meta-card">
+                        <i class="fa-solid fa-hourglass-half icon"></i>
+                        <div>
+                            <span class="meta-val" id="metaReadTime">0 min</span>
+                            <span class="meta-key">Lectura Estimada</span>
+                        </div>
+                    </div>
+                    <div class="meta-card">
+                        <i class="fa-solid fa-stamp icon"></i>
+                        <div>
+                            <span class="meta-val" id="metaParser">N/A</span>
+                            <span class="meta-key">Motor Utilizado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Extracted Text Container -->
+                <div id="textContainer" class="text-container hidden">
+                    <textarea id="extractedTextarea" readonly placeholder="El contenido textual extraído aparecerá en esta zona..."></textarea>
+                </div>
+
+                <!-- Benchmark Display Container -->
+                <div id="benchmarkContainer" class="benchmark-container hidden">
+                    <h3><i class="fa-solid fa-diagram-project"></i> Benchmark Comparativo de Parseadores</h3>
+                    <div id="benchmarkContent" class="benchmark-cards"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- History Table Section -->
+        <section class="card formal-panel history-section">
+            <div class="history-header">
+                <h2><i class="fa-solid fa-box-archive"></i> Registro Histórico de Documentos</h2>
+                <button id="btnRefreshHistory" class="btn-secondary"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Documento</th>
+                            <th>Formato</th>
+                            <th>Tamaño</th>
+                            <th>Estado</th>
+                            <th>Duración</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">Consultando registros en base de datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

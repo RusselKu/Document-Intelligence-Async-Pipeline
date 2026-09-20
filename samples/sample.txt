@@ -1,0 +1,4 @@
+Documento de prueba para el Pipeline Asíncrono de Inteligencia de Documentos.
+Este archivo contiene texto plano en español con múltiples párrafos para verificar la correcta ingesta, extracción y cálculo de metadatos (palabras, caracteres, tiempo de lectura e idioma detectado).
+
+El patrón Claim-Check nos permite encolar referencias ligeras en Redis mientras mantenemos el payload binario pesado en un volumen persistente.
